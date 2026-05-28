@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KFS CS Club — Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --blue-light:#5bc8f5;--blue-mid:#4a90e2;--blue-deep:#3a5bd9;
+      --bg:#07091a;--surface:#0d1230;--surface2:#111840;--surface3:#161d44;
+      --text:#e8f0fe;--muted:#7a8fc0;--green:#00e5a0;--red:#ff4d6a;--gold:#f5c842;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(74,144,226,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(74,144,226,.05) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+    .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:36px 24px 80px}
+
+    /* header */
+    .page-header{display:flex;align-items:center;gap:16px;margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid rgba(74,144,226,.15)}
+    .page-header img{width:54px;height:54px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(91,200,245,.4))}
+    .page-header h1{font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,var(--blue-light),var(--blue-deep));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .page-header p{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:2px}
+    .header-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+
+    /* tabs */
+    .tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border-radius:12px;padding:5px}
+    .tab{flex:1;padding:10px 16px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-family:'Exo 2',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+    .tab.active{background:linear-gradient(135deg,var(--blue-mid),var(--blue-deep));color:#fff;box-shadow:0 4px 14px rgba(58,91,217,.35)}
+    .tab:hover:not(.active){color:var(--text);background:var(--surface2)}
+
+    /* panels */
+    .panel{display:none}.panel.active{display:block}
+
+    /* add-form card */
+    .add-card{background:var(--surface);border:1.5px solid rgba(74,144,226,.2);border-radius:16px;padding:28px;margin-bottom:28px}
+    .add-card h2{font-size:1rem;font-weight:700;color:var(--blue-light);font-family:'Share Tech Mono',monospace;letter-spacing:.08em;margin-bottom:20px;text-transform:uppercase}
+
+    .form-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+    .field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+    .field label{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+    .field input,.field select{background:var(--surface2);border:1.5px solid rgba(74,144,226,.25);border-radius:9px;padding:11px 14px;font-size:.92rem;font-family:'Exo 2',sans-serif;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s;width:100%}
+    .field input:focus,.field select:focus{border-color:var(--blue-mid);box-shadow:0 0 0 3px rgba(74,144,226,.12)}
+    .field input::placeholder{color:var(--muted)}
+    .field select option{background:var(--surface2)}
+
+    /* id preview */
+    .id-preview{background:var(--surface2);border:1.5px dashed rgba(74,144,226,.3);border-radius:9px;padding:11px 14px;font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--blue-light);min-width:180px;display:flex;align-items:center;gap:6px}
+    .id-preview .label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:2px}
+
+    .btn{padding:12px 22px;background:linear-gradient(135deg,var(--blue-mid),var(--blue-deep));border:none;border-radius:9px;color:#fff;font-family:'Exo 2',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(58,91,217,.4)}
+    .btn:active{transform:translateY(0)}
+    .btn-green{background:linear-gradient(135deg,#009e6e,var(--green));color:#001a0f}
+    .btn-red{background:linear-gradient(135deg,#c0002a,var(--red));color:#fff}
+    .btn-gold{background:linear-gradient(135deg,#c8970a,var(--gold));color:#1a0f00}
+    .btn-sm{padding:6px 12px;font-size:.78rem;border-radius:7px}
+    .btn-ghost{background:transparent;border:1.5px solid rgba(74,144,226,.3);color:var(--muted)}
+    .btn-ghost:hover{border-color:var(--blue-light);color:var(--blue-light);box-shadow:none;transform:none}
+
+    /* table */
+    .table-wrap{background:var(--surface);border:1.5px solid rgba(74,144,226,.18);border-radius:16px;overflow:hidden}
+    .table-head{display:flex;align-items:center;padding:16px 22px;border-bottom:1px solid rgba(74,144,226,.12);gap:12px}
+    .table-head h3{font-size:.85rem;font-weight:700;color:var(--blue-light);font-family:'Share Tech Mono',monospace;text-transform:uppercase;letter-spacing:.08em}
+    .table-head .count{background:rgba(74,144,226,.15);color:var(--blue-light);font-family:'Share Tech Mono',monospace;font-size:.72rem;padding:3px 10px;border-radius:999px;margin-left:4px}
+    table{width:100%;border-collapse:collapse}
+    th{padding:10px 18px;text-align:left;font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid rgba(74,144,226,.1)}
+    td{padding:13px 18px;border-bottom:1px solid rgba(74,144,226,.07);font-size:.9rem;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(74,144,226,.04)}
+    .id-cell{font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--blue-light)}
+    .badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:.7rem;font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:.06em}
+    .badge.p{background:rgba(0,229,160,.1);color:var(--green);border:1px solid rgba(0,229,160,.25)}
+    .badge.o{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .empty-row td{text-align:center;padding:40px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:.85rem}
+
+    /* export section */
+    .export-card{background:var(--surface);border:1.5px solid rgba(74,144,226,.2);border-radius:16px;padding:24px;margin-top:28px}
+    .export-card h2{font-family:'Share Tech Mono',monospace;font-size:.85rem;color:var(--blue-light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+    .export-card p{font-size:.85rem;color:var(--muted);margin-bottom:16px;line-height:1.7}
+    .copy-box{background:var(--surface2);border:1px solid rgba(74,144,226,.2);border-radius:9px;padding:14px;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--muted);white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;margin-bottom:14px}
+
+    /* toast */
+    #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid rgba(0,229,160,.35);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:.82rem;padding:12px 22px;border-radius:10px;opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* stats row */
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+    .stat-card{background:var(--surface);border:1.5px solid rgba(74,144,226,.18);border-radius:12px;padding:18px 20px}
+    .stat-card .num{font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--blue-light),var(--blue-deep));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .stat-card .lbl{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+
+    @media(max-width:580px){
+      .stats{grid-template-columns:1fr 1fr}
+      .form-row{flex-direction:column}
+      .page-header{flex-wrap:wrap}
+      .header-right{margin-left:0;width:100%}
+      table{font-size:.8rem}
+      th,td{padding:10px 12px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-header">
+    <img src="public/logo.png" alt="KFS CS Club"/>
+    <div>
+      <h1>Admin Panel</h1>
+      <p>// KFS CS Club · Certificate Manager</p>
+    </div>
+    <div class="header-right">
+      <a href="index.html" style="text-decoration:none"><button class="btn btn-ghost btn-sm">↗ View Site</button></a>
+      <a href="generate-qr.html" style="text-decoration:none"><button class="btn btn-sm">⬛ QR Codes</button></a>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('participants', this)">👤 Participants</button>
+    <button class="tab" onclick="switchTab('organizers', this)">⭐ Organizers</button>
+    <button class="tab" onclick="switchTab('export', this)">📤 Export / Import</button>
+  </div>
+
+  <!-- PARTICIPANTS TAB -->
+  <div class="panel active" id="tab-participants">
+    <div class="add-card">
+      <h2>// add_participant</h2>
+      <div class="form-row">
+        <div class="field" style="flex:2;min-width:200px">
+          <label>Full Name</label>
+          <input type="text" id="p-name" placeholder="e.g. John Doe" oninput="previewId('p')"/>
+        </div>
+        <div class="field">
+          <label>Issue Date</label>
+          <input type="date" id="p-date"/>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Auto ID</span>
+          <div class="id-preview" id="p-id-preview">KFS-EMB-??</div>
+        </div>
+        <button class="btn btn-green" onclick="addParticipant()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <h3>Participants</h3><span class="count" id="p-count">0</span>
+        <span style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--muted)">sorted by ID</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Name</th><th>Issue Date</th><th></th>
+        </tr></thead>
+        <tbody id="p-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ORGANIZERS TAB -->
+  <div class="panel" id="tab-organizers">
+    <div class="add-card">
+      <h2>// add_organizer</h2>
+      <div class="form-row">
+        <div class="field" style="flex:2;min-width:200px">
+          <label>Full Name</label>
+          <input type="text" id="o-name" placeholder="e.g. Dr. Khaled Farouk" oninput="previewId('o')"/>
+        </div>
+        <div class="field" style="flex:1.5">
+          <label>Role / Title</label>
+          <input type="text" id="o-role" placeholder="e.g. Club President"/>
+        </div>
+        <div class="field">
+          <label>Issue Date</label>
+          <input type="date" id="o-date"/>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Auto ID</span>
+          <div class="id-preview" id="o-id-preview">KFS-EMB-ORG-??</div>
+        </div>
+        <button class="btn btn-gold" onclick="addOrganizer()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-head">
+        <h3>Organizers</h3><span class="count" id="o-count">0</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Name</th><th>Role</th><th>Issue Date</th><th></th>
+        </tr></thead>
+        <tbody id="o-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div class="panel" id="tab-export">
+    <div class="export-card">
+      <h2>// export database</h2>
+      <p>Copy the JSON below and paste it into the <code style="color:var(--blue-light)">CERTIFICATES</code> object inside <code style="color:var(--blue-light)">index.html</code> and <code style="color:var(--blue-light)">generate-qr.html</code> before pushing to GitHub. This makes your data permanent — the admin panel uses browser storage locally.</p>
+      <div class="copy-box" id="export-box"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="copyExport()">📋 Copy JSON</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadExport()">⬇ Download .json</button>
+      </div>
+    </div>
+
+    <div class="export-card" style="margin-top:20px">
+      <h2>// import database</h2>
+      <p>Paste a previously exported JSON here to restore data (e.g. on a new device).</p>
+      <textarea id="import-box" style="width:100%;background:var(--surface2);border:1.5px solid rgba(74,144,226,.25);border-radius:9px;padding:14px;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--text);outline:none;resize:vertical;min-height:120px;margin-bottom:14px" placeholder='{"participants":[...],"organizers":[...]}'></textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-gold" onclick="importDB()">📥 Import</button>
+        <button class="btn btn-red btn-sm" onclick="clearDB()">🗑 Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const DB_KEY = 'kfs_cert_db';
+  const TODAY  = new Date().toISOString().split('T')[0];
+
+  // set today as default dates
+  document.getElementById('p-date').value = TODAY;
+  document.getElementById('o-date').value = TODAY;
+
+  // ── DB helpers ──
+  function getDB() {
+    try {
+      const s = localStorage.getItem(DB_KEY);
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return { participants: [], organizers: [] };
+  }
+  function saveDB(db) {
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+  }
+
+  // ── ID generation ──
+  function nextPNum(db) {
+    if (!db.participants.length) return 1;
+    const nums = db.participants.map(p => {
+      const m = p.id.match(/KFS-EMB-(\d+)$/);
+      return m ? parseInt(m[1]) : 0;
+    });
+    return Math.max(...nums) + 1;
+  }
+  function nextONum(db) {
+    if (!db.organizers.length) return 1;
+    const nums = db.organizers.map(o => {
+      const m = o.id.match(/KFS-EMB-ORG-(\d+)$/);
+      return m ? parseInt(m[1]) : 0;
+    });
+    return Math.max(...nums) + 1;
+  }
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  function previewId(type) {
+    const db = getDB();
+    if (type === 'p') {
+      const n = nextPNum(db);
+      document.getElementById('p-id-preview').textContent = `KFS-EMB-${pad(n)}`;
+    } else {
+      const n = nextONum(db);
+      document.getElementById('o-id-preview').textContent = `KFS-EMB-ORG-${pad(n)}`;
+    }
+  }
+
+  // ── Add participant ──
+  function addParticipant() {
+    const name  = document.getElementById('p-name').value.trim();
+    const date  = document.getElementById('p-date').value;
+    if (!name) { toast('⚠ Please enter a name', true); return; }
+    const db = getDB();
+    const id = `KFS-EMB-${pad(nextPNum(db))}`;
+    db.participants.push({ id, name, issueDate: date || TODAY });
+    saveDB(db);
+    document.getElementById('p-name').value = '';
+    previewId('p');
+    renderAll();
+    toast(`✅ Added ${name} → ${id}`);
+  }
+
+  // ── Add organizer ──
+  function addOrganizer() {
+    const name = document.getElementById('o-name').value.trim();
+    const role = document.getElementById('o-role').value.trim();
+    const date = document.getElementById('o-date').value;
+    if (!name) { toast('⚠ Please enter a name', true); return; }
+    const db = getDB();
+    const id = `KFS-EMB-ORG-${pad(nextONum(db))}`;
+    db.organizers.push({ id, name, role, issueDate: date || TODAY });
+    saveDB(db);
+    document.getElementById('o-name').value = '';
+    document.getElementById('o-role').value = '';
+    previewId('o');
+    renderAll();
+    toast(`✅ Added ${name} → ${id}`);
+  }
+
+  // ── Delete ──
+  function deleteEntry(type, id) {
+    if (!confirm(`Delete ${id}?`)) return;
+    const db = getDB();
+    if (type === 'p') db.participants = db.participants.filter(x => x.id !== id);
+    else              db.organizers  = db.organizers.filter(x => x.id !== id);
+    saveDB(db);
+    renderAll();
+    toast(`🗑 Deleted ${id}`);
+  }
+
+  // ── Render ──
+  function renderAll() {
+    const db = getDB();
+    renderParticipants(db);
+    renderOrganizers(db);
+    renderStats(db);
+    renderExport(db);
+    previewId('p');
+    previewId('o');
+  }
+
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtDate(d){ try{ return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){return d||'—'} }
+
+  function renderParticipants(db) {
+    const tbody = document.getElementById('p-tbody');
+    document.getElementById('p-count').textContent = db.participants.length;
+    if (!db.participants.length) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="4">No participants yet — add one above ↑</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = db.participants.map(p => `
+      <tr>
+        <td class="id-cell">${esc(p.id)}</td>
+        <td><strong>${esc(p.name)}</strong></td>
+        <td style="color:var(--muted);font-size:.82rem">${fmtDate(p.issueDate)}</td>
+        <td><button class="btn btn-red btn-sm" onclick="deleteEntry('p','${esc(p.id)}')">✕</button></td>
+      </tr>`).join('');
+  }
+
+  function renderOrganizers(db) {
+    const tbody = document.getElementById('o-tbody');
+    document.getElementById('o-count').textContent = db.organizers.length;
+    if (!db.organizers.length) {
+      tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No organizers yet — add one above ↑</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = db.organizers.map(o => `
+      <tr>
+        <td class="id-cell">${esc(o.id)}</td>
+        <td><strong>${esc(o.name)}</strong></td>
+        <td style="color:var(--muted)">${esc(o.role)||'—'}</td>
+        <td style="color:var(--muted);font-size:.82rem">${fmtDate(o.issueDate)}</td>
+        <td><button class="btn btn-red btn-sm" onclick="deleteEntry('o','${esc(o.id)}')">✕</button></td>
+      </tr>`).join('');
+  }
+
+  function renderStats(db) {
+    const total = db.participants.length + db.organizers.length;
+    document.getElementById('stats').innerHTML = `
+      <div class="stat-card"><div class="num">${db.participants.length}</div><div class="lbl">Participants</div></div>
+      <div class="stat-card"><div class="num">${db.organizers.length}</div><div class="lbl">Organizers</div></div>
+      <div class="stat-card"><div class="num">${total}</div><div class="lbl">Total Certificates</div></div>`;
+  }
+
+  function renderExport(db) {
+    document.getElementById('export-box').textContent = JSON.stringify(db, null, 2);
+  }
+
+  // ── Export / Import ──
+  function copyExport() {
+    const text = document.getElementById('export-box').textContent;
+    navigator.clipboard.writeText(text).then(() => toast('📋 Copied to clipboard!')).catch(() => toast('⚠ Copy failed — select and copy manually', true));
+  }
+
+  function downloadExport() {
+    const text = document.getElementById('export-box').textContent;
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(text);
+    a.download = 'kfs_certificates.json';
+    a.click();
+    toast('⬇ Downloaded kfs_certificates.json');
+  }
+
+  function importDB() {
+    try {
+      const text = document.getElementById('import-box').value.trim();
+      if (!text) { toast('⚠ Paste JSON first', true); return; }
+      const data = JSON.parse(text);
+      if (!data.participants || !data.organizers) throw new Error();
+      saveDB(data);
+      renderAll();
+      document.getElementById('import-box').value = '';
+      toast(`✅ Imported ${data.participants.length} participants + ${data.organizers.length} organizers`);
+    } catch(e) {
+      toast('⚠ Invalid JSON format', true);
+    }
+  }
+
+  function clearDB() {
+    if (!confirm('Clear ALL certificate data? This cannot be undone.')) return;
+    localStorage.removeItem(DB_KEY);
+    renderAll();
+    toast('🗑 All data cleared');
+  }
+
+  // ── Tabs ──
+  function switchTab(name, btn) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'export') renderExport(getDB());
+  }
+
+  // ── Toast ──
+  function toast(msg, isErr=false) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.borderColor = isErr ? 'rgba(255,77,106,.4)' : 'rgba(0,229,160,.35)';
+    el.style.color = isErr ? 'var(--red)' : 'var(--green)';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ── Enter key shortcuts ──
+  document.getElementById('p-name').addEventListener('keydown', e => { if(e.key==='Enter') addParticipant(); });
+  document.getElementById('o-name').addEventListener('keydown', e => { if(e.key==='Enter') addOrganizer(); });
+
+  // ── Init ──
+  renderAll();
+</script>
+</body>
+</html>

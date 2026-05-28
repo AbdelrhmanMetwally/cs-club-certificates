@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KFS CS Club — QR Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root{--blue-light:#5bc8f5;--blue-mid:#4a90e2;--blue-deep:#3a5bd9;--bg:#07091a;--surface:#0d1230;--surface2:#111840;--text:#e8f0fe;--muted:#7a8fc0;--green:#00e5a0;--gold:#f5c842;--red:#ff4d6a}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;padding:32px 20px;min-height:100vh}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(74,144,226,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(74,144,226,.05) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto}
+    .page-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:18px;border-bottom:1px solid rgba(74,144,226,.15)}
+    .page-header img{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(91,200,245,.4))}
+    .page-header h1{font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,var(--blue-light),var(--blue-deep));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .page-header p{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--muted)}
+    .header-right{margin-left:auto;display:flex;gap:10px}
+    .btn{padding:10px 20px;background:linear-gradient(135deg,var(--blue-mid),var(--blue-deep));border:none;border-radius:9px;color:#fff;font-family:'Exo 2',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(58,91,217,.4)}
+    .btn-sm{padding:6px 12px;font-size:.76rem;border-radius:7px}
+    .btn-ghost{background:transparent;border:1.5px solid rgba(74,144,226,.3);color:var(--muted)}
+    .btn-ghost:hover{border-color:var(--blue-light);color:var(--blue-light);box-shadow:none;transform:none}
+    .btn-green{background:linear-gradient(135deg,#009e6e,var(--green));color:#001a0f}
+    label{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--blue-light);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:5px}
+    input[type=text]{background:var(--surface2);border:1.5px solid rgba(74,144,226,.25);border-radius:8px;padding:10px 14px;font-size:.9rem;font-family:'Share Tech Mono',monospace;color:var(--text);outline:none;width:380px;max-width:100%}
+    input:focus{border-color:var(--blue-mid);box-shadow:0 0 0 3px rgba(74,144,226,.12)}
+    .config{background:var(--surface);border:1.5px solid rgba(74,144,226,.2);border-radius:14px;padding:22px 24px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+    .note{background:rgba(91,200,245,.06);border:1px solid rgba(91,200,245,.18);border-radius:10px;padding:14px 18px;font-size:.8rem;color:var(--muted);margin-bottom:24px;line-height:1.75;font-family:'Share Tech Mono',monospace}
+    .note strong{color:var(--blue-light)}
+    .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:22px}
+    .bar-label{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--muted)}
+    .section-title{font-family:'Share Tech Mono',monospace;font-size:.78rem;color:var(--blue-light);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(74,144,226,.12)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+    .qr-card{background:var(--surface);border:1.5px solid rgba(74,144,226,.18);border-radius:14px;padding:18px;text-align:center;transition:border-color .2s,transform .2s}
+    .qr-card:hover{border-color:rgba(91,200,245,.4);transform:translateY(-3px)}
+    .qr-card.org-card{border-color:rgba(245,200,66,.2)}
+    .qr-card.org-card:hover{border-color:rgba(245,200,66,.5)}
+    .qr-box{display:flex;justify-content:center;margin-bottom:12px}
+    .qr-box canvas,.qr-box img{border-radius:6px;background:#fff;padding:5px}
+    .qr-name{font-weight:700;font-size:.92rem;margin-bottom:2px}
+    .qr-id{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--muted);margin-bottom:10px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:.65rem;font-family:'Share Tech Mono',monospace;font-weight:700;letter-spacing:.06em;margin-bottom:10px}
+    .badge.p{background:rgba(0,229,160,.1);color:var(--green);border:1px solid rgba(0,229,160,.25)}
+    .badge.o{background:rgba(245,200,66,.1);color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+    .empty{text-align:center;padding:50px 20px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:.85rem}
+    @media print{
+      body{background:#fff;color:#000;padding:8px}
+      body::before,.config,.bar,.note,.page-header,.btn,.section-title{display:none!important}
+      .qr-card{border:1px solid #ccc;break-inside:avoid}
+      .qr-name,.qr-id{color:#000}
+      .badge{color:#000;border-color:#999}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-header">
+    <img src="public/logo.png" alt="KFS CS Club"/>
+    <div>
+      <h1>QR Code Generator</h1>
+      <p>// KFS CS Club · Certificate QR Codes</p>
+    </div>
+    <div class="header-right">
+      <a href="admin.html" style="text-decoration:none"><button class="btn btn-ghost btn-sm">⚙ Admin</button></a>
+      <a href="index.html" style="text-decoration:none"><button class="btn btn-ghost btn-sm">↗ Site</button></a>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>How it works:</strong> Add students in the <strong>Admin Panel</strong> first, then come here to generate QR codes.<br>
+    Set your GitHub Pages URL below → each QR encodes <strong>https://username.github.io/kfs-cs-club/?id=KFS-EMB-XX</strong><br>
+    When scanned, the verification page opens and auto-verifies instantly. Download PNGs to attach to certificates.
+  </div>
+
+  <div class="config">
+    <div>
+      <label>Your GitHub Pages URL</label>
+      <input type="text" id="baseUrl" value="https://YOUR-USERNAME.github.io/kfs-cs-club" placeholder="https://username.github.io/repo-name"/>
+    </div>
+    <button class="btn" onclick="regenerate()">↻ Regenerate QR Codes</button>
+    <button class="btn btn-green" onclick="window.print()">🖨 Print All</button>
+  </div>
+
+  <div id="content"><div class="empty">// Loading data from Admin Panel…</div></div>
+
+</div>
+
+<script>
+  const DB_KEY = 'kfs_cert_db';
+
+  function getDB() {
+    try {
+      const s = localStorage.getItem(DB_KEY);
+      if (s) return JSON.parse(s);
+    } catch(e) {}
+    return { participants: [], organizers: [] };
+  }
+
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function regenerate() {
+    const base = document.getElementById('baseUrl').value.replace(/\/$/, '');
+    const db   = getDB();
+    const el   = document.getElementById('content');
+
+    const all = [
+      ...db.participants.map(p => ({ ...p, type: 'p' })),
+      ...db.organizers.map(o => ({ ...o, type: 'o' }))
+    ];
+
+    if (!all.length) {
+      el.innerHTML = `<div class="empty">// No certificates yet. Add students in the <a href="admin.html" style="color:var(--blue-light)">Admin Panel</a> first.</div>`;
+      return;
+    }
+
+    let html = '';
+
+    if (db.participants.length) {
+      html += `<div class="section-title">👤 Participants (${db.participants.length})</div><div class="grid" id="grid-p"></div>`;
+    }
+    if (db.organizers.length) {
+      html += `<div class="section-title">⭐ Organizers (${db.organizers.length})</div><div class="grid" id="grid-o"></div>`;
+    }
+
+    el.innerHTML = html;
+
+    db.participants.forEach(cert => buildCard(cert, 'p', base, 'grid-p'));
+    db.organizers.forEach(cert  => buildCard(cert, 'o', base, 'grid-o'));
+  }
+
+  function buildCard(cert, type, base, gridId) {
+    const url  = `${base}/?id=${encodeURIComponent(cert.id)}`;
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+
+    const card = document.createElement('div');
+    card.className = `qr-card${type==='o' ? ' org-card' : ''}`;
+    card.innerHTML = `
+      <div class="qr-box" id="qr-${cert.id.replace(/[^a-zA-Z0-9]/g,'-')}"></div>
+      <span class="badge ${type}">${type==='p' ? 'Participant' : 'Organizer'}</span>
+      <div class="qr-name">${esc(cert.name)}</div>
+      <div class="qr-id">${esc(cert.id)}</div>
+      <button class="btn btn-sm" onclick="downloadQR('${cert.id.replace(/[^a-zA-Z0-9]/g,'-')}','${esc(cert.name)}','${esc(cert.id)}')">⬇ PNG</button>`;
+    grid.appendChild(card);
+
+    new QRCode(document.getElementById(`qr-${cert.id.replace(/[^a-zA-Z0-9]/g,'-')}`), {
+      text: url,
+      width: 150, height: 150,
+      colorDark: '#0d1230',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+
+  function downloadQR(safeId, name, origId) {
+    const el = document.querySelector(`#qr-${safeId} canvas`);
+    if (!el) { alert('QR not ready — wait a moment and retry'); return; }
+    const a = document.createElement('a');
+    a.href = el.toDataURL('image/png');
+    a.download = `QR_${origId}_${name.replace(/\s+/g,'_')}.png`;
+    a.click();
+  }
+
+  window.addEventListener('DOMContentLoaded', regenerate);
+</script>
+</body>
+</html>
